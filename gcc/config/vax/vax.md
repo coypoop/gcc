@@ -646,7 +646,7 @@
   ""
   "
 {
-  if (! CONST_INT_P (operands[2]))
+  if (! CONST_INT_P(operands[2]))
     operands[2] = gen_rtx_NEG (QImode, negate_rtx (QImode, operands[2]));
 }")
 
@@ -975,8 +975,8 @@
   ""
   "*
 {
-  if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
-      || ! CONST_INT_P (operands[3])
+  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
+      || !CONST_INT_P (operands[3])
       || (INTVAL (operands[2]) != 8 && INTVAL (operands[2]) != 16)
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
@@ -1005,8 +1005,8 @@
   ""
   "*
 {
-  if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
-      || ! CONST_INT_P (operands[3])
+  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
+      || !CONST_INT_P (operands[3])
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
       || (MEM_P (operands[1])
