@@ -26,11 +26,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "rtl.h"
 #include "tree.h"
+#include "stringpool.h"
+#include "attribs.h"
 #include "df.h"
 #include "memmodel.h"
 #include "tm_p.h"
-#include "stringpool.h"
-#include "attribs.h"
 #include "optabs.h"
 #include "regs.h"
 #include "emit-rtl.h"
@@ -65,6 +65,7 @@ static void vax_trampoline_init (rtx, tree, rtx);
 static poly_int64 vax_return_pops_args (tree, tree, poly_int64);
 static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 static HOST_WIDE_INT vax_starting_frame_offset (void);
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.word\t"
@@ -396,7 +397,7 @@ print_operand_address (FILE * file, rtx addr)
 		{
 		  if (CONST_INT_P (offset))
 		    offset = plus_constant (Pmode, XEXP (addr, 0),
-		                            INTVAL (offset));
+					    INTVAL (offset));
 		  else
 		    {
 		      gcc_assert (CONST_INT_P (XEXP (addr, 0)));
