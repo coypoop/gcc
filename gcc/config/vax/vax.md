@@ -41,8 +41,31 @@
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer
    (VAX_PC_REGNUM 15)	    ; Register 15 contains the program counter
    (VAX_PSW_REGNUM 16)	    ; Program Status Word
+   (CC_REGNUM 17)           ; N,Z,V,C condition codes set
+   (CCNZV_REGNUM 18)        ; N,Z,V condition codes
   ]
 )
+
+;; Substitution to turn a CC clobber into a CC setter.  We have two of
+;; these: CCmode and CCNZVmode
+(define_subst "cc_cc"
+  [(set (match_operand 0 "") (match_operand 1 ""))
+   (clobber (reg CC_REGNUM))]
+  ""
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_dup 1) (const_int 0)))
+   (set (match_dup 0) (match_dup 1))])
+
+(define_subst "cc_ccnzv"
+  [(set (match_operand 0 "") (match_operand 1 ""))
+   (clobber (reg CC_REGNUM))]
+  ""
+  [(set (reg:CCNZV CC_REGNUM)
+	(compare:CCNZV (match_dup 1) (const_int 0)))
+   (set (match_dup 0) (match_dup 1))])
+
+(define_subst_attr "cc_cc" "cc_cc" "_nocc" "_cc")
+(define_subst_attr "cc_ccnzv" "cc_ccnzv" "_nocc" "_cc")
 
 ;; Integer modes supported on VAX, with a mapping from machine mode
 ;; to mnemonic suffix.  DImode is always a special case.
@@ -63,28 +86,28 @@
 (include "predicates.md")
 
 (define_insn "*cmp<mode>"
-  [(set (cc0)
-	(compare (match_operand:VAXint 0 "nonimmediate_operand" "nrmT,nrmT")
-		 (match_operand:VAXint 1 "general_operand" "I,nrmT")))]
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_operand:VAXint 0 "nonimmediate_operand" "nrmT,nrmT")
+		    (match_operand:VAXint 1 "general_operand" "I,nrmT")))]
   ""
   "@
    tst<VAXint:isfx> %0
    cmp<VAXint:isfx> %0,%1")
 
 (define_insn "*cmp<mode>"
-  [(set (cc0)
-	(compare (match_operand:VAXfp 0 "general_operand" "gF,gF")
-		 (match_operand:VAXfp 1 "general_operand" "G,gF")))]
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_operand:VAXfp 0 "general_operand" "gF,gF")
+		    (match_operand:VAXfp 1 "general_operand" "G,gF")))]
   ""
   "@
    tst<VAXfp:fsfx> %0
    cmp<VAXfp:fsfx> %0,%1")
 
 (define_insn "*bit<mode>"
-  [(set (cc0)
-	(compare (and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
-			     (match_operand:VAXint 1 "general_operand" "nrmT"))
-		 (const_int 0)))]
+  [(set (reg:CCNZV CC_REGNUM)
+	(compare:CCNZV (and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
+				    (match_operand:VAXint 1 "general_operand" "nrmT"))
+		       (const_int 0)))]
   ""
   "bit<VAXint:isfx> %0,%1")
 
@@ -98,7 +121,8 @@
 
 (define_insn "mov<mode>"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
-	(match_operand:VAXfp 1 "general_operand" "G,gF"))]
+	(match_operand:VAXfp 1 "general_operand" "G,gF"))
+    (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "@
    clr<VAXfp:fsfx> %0
@@ -107,13 +131,15 @@
 ;; Some VAXen don't support this instruction.
 ;;(define_insn "movti"
 ;;  [(set (match_operand:TI 0 "general_operand" "=g")
-;;	(match_operand:TI 1 "general_operand" "g"))]
+;;	(match_operand:TI 1 "general_operand" "g"))
+;;    (clobber (reg:CC CC_REGNUM))]
 ;;  ""
 ;;  "movh %1,%0")
 
 (define_insn "movdi"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
-	(match_operand:DI 1 "general_operand" "g"))]
+	(match_operand:DI 1 "general_operand" "g"))
+    (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "* return vax_output_int_move (insn, operands, DImode);")
 
@@ -136,7 +162,8 @@
 
 (define_expand "movsi"
   [(set (match_operand:SI 0 "nonimmediate_operand" "")
-	(match_operand:SI 1 "general_operand" ""))]
+	(match_operand:SI 1 "general_operand" ""))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "
 {
@@ -158,19 +185,22 @@
 
 (define_insn "movsi_2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SI 1 "nonsymbolic_operand" "nrmT"))]
+	(match_operand:SI 1 "nonsymbolic_operand" "nrmT"))
+    (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "* return vax_output_int_move (insn, operands, SImode);")
 
 (define_insn "mov<mode>"
   [(set (match_operand:VAXintQH 0 "nonimmediate_operand" "=g")
-	(match_operand:VAXintQH 1 "general_operand" "g"))]
+	(match_operand:VAXintQH 1 "general_operand" "g"))
+    (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "* return vax_output_int_move (insn, operands, <MODE>mode);")
 
 (define_insn "movstricthi"
   [(set (strict_low_part (match_operand:HI 0 "register_operand" "+g"))
-	(match_operand:HI 1 "general_operand" "g"))]
+	(match_operand:HI 1 "general_operand" "g"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -191,7 +221,8 @@
 
 (define_insn "movstrictqi"
   [(set (strict_low_part (match_operand:QI 0 "register_operand" "+g"))
-	(match_operand:QI 1 "general_operand" "g"))]
+	(match_operand:QI 1 "general_operand" "g"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -212,7 +243,8 @@
   [(set (match_operand:BLK 0 "general_operand" "=g")
 	(match_operand:BLK 1 "general_operand" "g"))
    (use (match_operand:HI 2 "general_operand" "g"))
-   (match_operand 3 "" "")]
+   (match_operand 3 "" "")
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "
 {
@@ -233,7 +265,8 @@
 (define_insn "movmemsi1_2"
   [(set (match_operand:BLK 0 "memory_operand" "=B")
 	(match_operand:BLK 1 "memory_operand" "B"))
-   (use (match_operand:SI 2 "const_int_operand" "g"))]
+   (use (match_operand:SI 2 "const_int_operand" "g"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "INTVAL (operands[2]) <= 48"
   "* return vax_output_movmemsi (insn, operands);")
 
@@ -246,7 +279,8 @@
    (clobber (reg:SI 2))
    (clobber (reg:SI 3))
    (clobber (reg:SI 4))
-   (clobber (reg:SI 5))]
+   (clobber (reg:SI 5))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "movc3 %2,%1,%0")
 
@@ -254,67 +288,78 @@
 
 (define_insn "truncsiqi2"
   [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
-	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))]
+	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtlb %1,%0")
 
 (define_insn "truncsihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
-	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))]
+	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtlw %1,%0")
 
 (define_insn "trunchiqi2"
   [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
-	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtwb %1,%0")
 
 (define_insn "extendhisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(sign_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+	(sign_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtwl %1,%0")
 
 (define_insn "extendqihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
-	(sign_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+	(sign_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtbw %1,%0")
 
 (define_insn "extendqisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(sign_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+	(sign_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtbl %1,%0")
 
 (define_insn "extendsfdf2"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=g")
-	(float_extend:DF (match_operand:SF 1 "general_operand" "gF")))]
+	(float_extend:DF (match_operand:SF 1 "general_operand" "gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvtf%# %1,%0")
 
 (define_insn "truncdfsf2"
   [(set (match_operand:SF 0 "nonimmediate_operand" "=g")
-	(float_truncate:SF (match_operand:DF 1 "general_operand" "gF")))]
+	(float_truncate:SF (match_operand:DF 1 "general_operand" "gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvt%#f %1,%0")
 
 (define_insn "zero_extendhisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+	(zero_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "movzwl %1,%0")
 
 (define_insn "zero_extendqihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
-	(zero_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+	(zero_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "movzbw %1,%0")
 
 (define_insn "zero_extendqisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+	(zero_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "movzbl %1,%0")
 
@@ -322,7 +367,8 @@
 
 (define_insn "float<VAXint:mode><VAXfp:mode>2"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
-	(float:VAXfp (match_operand:VAXint 1 "nonimmediate_operand" "g")))]
+	(float:VAXfp (match_operand:VAXint 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "cvt<VAXint:isfx><VAXfp:fsfx> %1,%0")
 
@@ -330,7 +376,8 @@
 
 (define_insn "fix_trunc<VAXfp:mode><VAXint:mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(fix:VAXint (match_operand:VAXfp 1 "general_operand" "gF")))]
+	(fix:VAXint (match_operand:VAXfp 1 "general_operand" "gF")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "cvt<VAXfp:fsfx><VAXint:isfx> %1,%0")
 
@@ -338,13 +385,14 @@
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "")
 	(fix:VAXint (match_operand:VAXfp 1 "general_operand")))]
   "")
-
+
 ;;- All kinds of add instructions.
 
 (define_insn "add<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g,g")
 	(plus:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF,gF")
-		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))]
+		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    add<VAXfp:fsfx>2 %2,%0
@@ -354,49 +402,56 @@
 (define_insn "pushlclsymreg"
   [(set (match_operand:SI 0 "push_operand" "=g")
 	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "local_symbolic_operand" "i")))]
+		 (match_operand:SI 2 "local_symbolic_operand" "i")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "flag_pic"
   "pushab %a2[%1]")
 
 (define_insn "pushextsymreg"
   [(set (match_operand:SI 0 "push_operand" "=g")
 	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "external_symbolic_operand" "i")))]
+		 (match_operand:SI 2 "external_symbolic_operand" "i")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "flag_pic"
   "pushab %a2[%1]")
 
 (define_insn "movlclsymreg"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "local_symbolic_operand" "i")))]
+		 (match_operand:SI 2 "local_symbolic_operand" "i")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "flag_pic"
   "movab %a2[%1],%0")
 
 (define_insn "movextsymreg"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "external_symbolic_operand" "i")))]
+		 (match_operand:SI 2 "external_symbolic_operand" "i")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "flag_pic"
   "movab %a2[%1],%0")
 
 (define_insn "add<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
 	(plus:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")
-		     (match_operand:VAXint 2 "general_operand" "nrmT")))]
+		     (match_operand:VAXint 2 "general_operand" "nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "* return vax_output_int_add (insn, operands, <MODE>mode);")
 
 (define_expand "adddi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(plus:DI (match_operand:DI 1 "general_operand" "g")
-		 (match_operand:DI 2 "general_operand" "g")))]
+		 (match_operand:DI 2 "general_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   "!reload_in_progress"
   "vax_expand_addsub_di_operands (operands, PLUS); DONE;")
 
 (define_insn "adcdi3"
   [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr")
 	(plus:DI (match_operand:DI 1 "general_addsub_di_operand" "%0")
-		 (match_operand:DI 2 "general_addsub_di_operand" "nRr")))]
+		 (match_operand:DI 2 "general_addsub_di_operand" "nRr")))
+   (clobber (reg:CC CC_REGNUM))]
   "TARGET_QMATH"
   "* return vax_output_int_add (insn, operands, DImode);")
 
@@ -404,16 +459,18 @@
 (define_insn "adddi3_old"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=ro>,ro>")
 	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
-		 (match_operand:DI 2 "general_operand" "Fsro,Fs")))]
+		 (match_operand:DI 2 "general_operand" "Fsro,Fs")))
+   (clobber (reg:CC CC_REGNUM))]
   "!TARGET_QMATH"
   "* return vax_output_int_add (insn, operands, DImode);")
-
+
 ;;- All kinds of subtract instructions.
 
 (define_insn "sub<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
 	(minus:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF")
-		     (match_operand:VAXfp 2 "general_operand" "gF,gF")))]
+		     (match_operand:VAXfp 2 "general_operand" "gF,gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    sub<VAXfp:fsfx>2 %2,%0
@@ -422,7 +479,8 @@
 (define_insn "sub<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(minus:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
-		      (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
+		      (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    sub<VAXint:isfx>2 %2,%0
@@ -431,7 +489,8 @@
 (define_expand "subdi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(minus:DI (match_operand:DI 1 "general_operand" "g")
-		  (match_operand:DI 2 "general_operand" "g")))]
+		  (match_operand:DI 2 "general_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   "!reload_in_progress"
   "vax_expand_addsub_di_operands (operands, MINUS); DONE;")
 
@@ -449,13 +508,14 @@
 		  (match_operand:DI 2 "general_operand" "Fsor,Fs")))]
   "!TARGET_QMATH"
   "* return vax_output_int_subtract (insn, operands, DImode);")
-
+
 ;;- Multiply instructions.
 
 (define_insn "mul<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g,g")
 	(mult:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF,gF")
-		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))]
+		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    mul<VAXfp:fsfx>2 %2,%0
@@ -465,7 +525,8 @@
 (define_insn "mul<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(mult:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
-		     (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
+		     (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    mul<VAXint:isfx>2 %2,%0
@@ -477,7 +538,8 @@
 	(mult:DI (sign_extend:DI
 		  (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
 		 (sign_extend:DI
-		  (match_operand:SI 2 "nonimmediate_operand" "nrmT"))))]
+		  (match_operand:SI 2 "nonimmediate_operand" "nrmT"))))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "emul %1,%2,$0,%0")
 
@@ -488,7 +550,8 @@
 		   (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
 		  (sign_extend:DI
 		   (match_operand:SI 2 "nonimmediate_operand" "nrmT")))
-	 (sign_extend:DI (match_operand:SI 3 "nonimmediate_operand" "g"))))]
+	 (sign_extend:DI (match_operand:SI 3 "nonimmediate_operand" "g"))))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "emul %1,%2,%3,%0")
 
@@ -500,7 +563,8 @@
 		   (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
 		  (sign_extend:DI
 		   (match_operand:SI 2 "nonimmediate_operand" "nrmT")))
-	 (match_operand:DI 3 "immediate_operand" "F")))]
+	 (match_operand:DI 3 "immediate_operand" "F")))
+   (clobber (reg:CC CC_REGNUM))]
   "GET_CODE (operands[3]) == CONST_DOUBLE
     && CONST_DOUBLE_HIGH (operands[3]) == (CONST_DOUBLE_LOW (operands[3]) >> 31)"
   "*
@@ -515,7 +579,8 @@
 (define_insn "div<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
 	(div:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF")
-		   (match_operand:VAXfp 2 "general_operand" "gF,gF")))]
+		   (match_operand:VAXfp 2 "general_operand" "gF,gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    div<VAXfp:fsfx>2 %2,%0
@@ -524,7 +589,8 @@
 (define_insn "div<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(div:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
-		    (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "@
    div<VAXint:isfx>2 %2,%0
@@ -541,7 +607,7 @@
 ;		(match_operand:SI 2 "general_operand" "g")))]
 ;  ""
 ;  "ediv %2,%1,%0,%3")
-
+
 ;; Bit-and on the VAX is done with a clear-bits insn.
 (define_expand "and<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "")
@@ -569,7 +635,8 @@
 (define_insn "*and<mode>"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(and:VAXint (not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT,nrmT"))
-		    (match_operand:VAXint 2 "general_operand" "0,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "0,nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "@
    bic<VAXint:isfx>2 %1,%0
@@ -583,19 +650,21 @@
 (define_insn "*and<mode>_const_int"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(and:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
-		    (match_operand:VAXint 2 "const_int_operand" "n,n")))]
+		    (match_operand:VAXint 2 "const_int_operand" "n,n")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "@
    bic<VAXint:isfx>2 %<VAXint:iprefx>2,%0
    bic<VAXint:isfx>3 %<VAXint:iprefx>2,%1,%0")
 
-
+
 ;;- Bit set instructions.
 
 (define_insn "ior<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(ior:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
-		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "@
    bis<VAXint:isfx>2 %2,%0
@@ -607,33 +676,37 @@
 (define_insn "xor<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(xor:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
-		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "@
    xor<VAXint:isfx>2 %2,%0
    xor<VAXint:isfx>2 %1,%0
    xor<VAXint:isfx>3 %2,%1,%0")
 
-
+
 (define_insn "neg<mode>2"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
-	(neg:VAXfp (match_operand:VAXfp 1 "general_operand" "gF")))]
+	(neg:VAXfp (match_operand:VAXfp 1 "general_operand" "gF")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "mneg<VAXfp:fsfx> %1,%0")
 
 (define_insn "neg<mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(neg:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))]
+	(neg:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "mneg<VAXint:isfx> %1,%0")
 
 (define_insn "one_cmpl<mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
-	(not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))]
+	(not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "mcom<VAXint:isfx> %1,%0")
 
-
+
 ;; Arithmetic right shift on the VAX works by negating the shift count,
 ;; then emitting a right shift with the shift count negated.  This means
 ;; that all actual shift counts in the RTL will be positive.  This
@@ -653,21 +726,24 @@
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
-		     (match_operand:QI 2 "const_int_operand" "n")))]
+		     (match_operand:QI 2 "const_int_operand" "n")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "ashl $%n2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
-		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
+		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "ashl %2,%1,%0")
 
 (define_insn "ashlsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
-		   (match_operand:QI 2 "general_operand" "g")))]
+		   (match_operand:QI 2 "general_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "*
 {
@@ -708,14 +784,16 @@
 (define_insn "ashldi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(ashift:DI (match_operand:DI 1 "general_operand" "g")
-		   (match_operand:QI 2 "general_operand" "g")))]
+		   (match_operand:QI 2 "general_operand" "g")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "ashq %2,%D1,%0")
 
 (define_insn ""
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:DI (match_operand:DI 1 "general_operand" "g")
-		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
+		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "ashq %2,%D1,%0")
 
@@ -754,21 +832,24 @@
 (define_insn "rotlsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(rotate:SI (match_operand:SI 1 "general_operand" "nrmT")
-		   (match_operand:QI 2 "general_operand" "g")))]
+		   (match_operand:QI 2 "general_operand" "g")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "rotl %2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
-		     (match_operand:QI 2 "const_int_operand" "n")))]
+		     (match_operand:QI 2 "const_int_operand" "n")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "rotl %R2,%1,%0")
 
 (define_insn ""
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
-		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
+		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "rotl %2,%1,%0")
 
@@ -780,7 +861,7 @@
 ;		 (match_operand:SI 3 "general_operand" "g")))]
 ;  ""
 ;  "index %1,$0x80000000,$0x7fffffff,%3,%2,%0")
-
+
 ;; Special cases of bit-field insns which we should
 ;; recognize in preference to the general case.
 ;; These handle aligned 8-bit and 16-bit fields,
@@ -793,7 +874,8 @@
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+ro")
 			 (match_operand:QI 1 "const_int_operand" "n")
 			 (match_operand:SI 2 "const_int_operand" "n"))
-	(match_operand:SI 3 "general_operand" "g"))]
+	(match_operand:SI 3 "general_operand" "g"))
+   (clobber (reg:CCNZV CC_REGNUM))]
    "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
    && (REG_P (operands[0])
@@ -823,7 +905,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")))]
+			 (match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
    && (REG_P (operands[1])
@@ -852,7 +935,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")))]
+			 (match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CC CC_REGNUM))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
    && (REG_P (operands[1])
@@ -876,11 +960,11 @@
     return \"cvtbl %1,%0\";
   return \"cvtwl %1,%0\";
 }")
-
+
 ;; Register-only SImode cases of bit-field insns.
 
 (define_insn ""
-  [(set (cc0)
+  [(set (reg:CC CC_REGNUM)
 	(compare
 	 (sign_extract:SI (match_operand:SI 0 "register_operand" "r")
 			  (match_operand:QI 1 "general_operand" "g")
@@ -890,7 +974,7 @@
   "cmpv %2,%1,%0,%3")
 
 (define_insn ""
-  [(set (cc0)
+  [(set (reg:CC CC_REGNUM)
 	(compare
 	 (zero_extract:SI (match_operand:SI 0 "register_operand" "r")
 			  (match_operand:QI 1 "general_operand" "g")
@@ -908,7 +992,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "nrmT")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -925,7 +1010,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "nrmT")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -948,7 +1034,7 @@
 ;; don't match these (and therefore match the cases above instead).
 
 (define_insn ""
-  [(set (cc0)
+  [(set (reg:CC CC_REGNUM)
 	(compare
 	 (sign_extract:SI (match_operand:QI 0 "memory_operand" "m")
 			  (match_operand:QI 1 "general_operand" "g")
@@ -958,7 +1044,7 @@
   "cmpv %2,%1,%0,%3")
 
 (define_insn ""
-  [(set (cc0)
+  [(set (reg:CC CC_REGNUM)
 	(compare
 	 (zero_extract:SI (match_operand:QI 0 "nonimmediate_operand" "rm")
 			  (match_operand:QI 1 "general_operand" "g")
@@ -971,7 +1057,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "nrmT")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -1001,7 +1088,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "nrmT")))]
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -1088,7 +1176,7 @@
 	(match_operand:SI 3 "general_operand" "nrmT"))]
   ""
   "insv %3,%2,%1,%0")
-
+
 ;; Unconditional jump
 (define_insn "jump"
   [(set (pc)
@@ -1099,24 +1187,24 @@
 ;; Conditional jumps
 
 (define_expand "cbranch<mode>4"
-  [(set (cc0)
+  [(set (reg:CC CC_REGNUM)
         (compare (match_operand:VAXint 1 "nonimmediate_operand" "")
                  (match_operand:VAXint 2 "general_operand" "")))
    (set (pc)
         (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
+              (match_operator 0 "ordered_comparison_operator" [(reg:CC CC_REGNUM)
                                                                (const_int 0)])
               (label_ref (match_operand 3 "" ""))
               (pc)))]
  "")
 
 (define_expand "cbranch<mode>4"
-  [(set (cc0)
+  [(set (reg:CC CC_REGNUM)
         (compare (match_operand:VAXfp 1 "general_operand" "")
                  (match_operand:VAXfp 2 "general_operand" "")))
    (set (pc)
         (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
+              (match_operator 0 "ordered_comparison_operator" [(reg:CC CC_REGNUM)
                                                                (const_int 0)])
               (label_ref (match_operand 3 "" ""))
               (pc)))]
@@ -1125,7 +1213,7 @@
 (define_insn "*branch"
   [(set (pc)
 	(if_then_else (match_operator 0 "ordered_comparison_operator"
-				      [(cc0)
+				      [(reg:CC CC_REGNUM)
 				       (const_int 0)])
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
@@ -1136,13 +1224,13 @@
 (define_insn "*branch_reversed"
   [(set (pc)
 	(if_then_else (match_operator 0 "ordered_comparison_operator"
-				      [(cc0)
+				      [(reg:CC CC_REGNUM)
 				       (const_int 0)])
 		      (pc)
 		      (label_ref (match_operand 1 "" ""))))]
   ""
   "j%C0 %l1") ; %C0 negates condition
-
+
 ;; Recognize jbs, jlbs, jbc and jlbc instructions.  Note that the operand
 ;; of jlbs and jlbc insns are SImode in the hardware.  However, if it is
 ;; memory, we use QImode in the insn.  So we can't use those instructions
@@ -1203,7 +1291,7 @@
   "@
    jlbc %0,%l2
    jbc %1,%0,%l2")
-
+
 ;; Subtract-and-jump and Add-and-jump insns.
 ;; These are not used when output is for the Unix assembler
 ;; because it does not know how to modify them to reach far.
@@ -1220,7 +1308,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int -1)))]
+		 (const_int -1)))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "!TARGET_UNIX_ASM"
   "jsobgtr %0,%l1")
 
@@ -1234,7 +1323,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int -1)))]
+		 (const_int -1)))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "!TARGET_UNIX_ASM"
   "jsobgeq %0,%l1")
 
@@ -1249,7 +1339,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int 1)))]
+		 (const_int 1)))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "!TARGET_UNIX_ASM"
   "jaoblss %1,%0,%l2")
 
@@ -1262,7 +1353,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int 1)))]
+		 (const_int 1)))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "!TARGET_UNIX_ASM && CONST_INT_P (operands[1])"
   "jaoblss %P1,%0,%l2")
 
@@ -1276,7 +1368,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int 1)))]
+		 (const_int 1)))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "!TARGET_UNIX_ASM"
   "jaobleq %1,%0,%l2")
 
@@ -1289,7 +1382,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int 1)))]
+		 (const_int 1)))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "!TARGET_UNIX_ASM && CONST_INT_P (operands[1])"
   "jaobleq %P1,%0,%l2")
 
@@ -1305,7 +1399,8 @@
 	 (pc)))
    (set (match_dup 0)
 	(plus:SI (match_dup 0)
-		 (const_int -1)))]
+		 (const_int -1)))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "decl %0\;jgequ %l1")
 
@@ -1329,7 +1424,8 @@
   [(call (match_operand:QI 0 "memory_operand" "m")
 	 (match_operand:SI 1 "const_int_operand" "n"))
    (set (reg:SI VAX_SP_REGNUM) (plus:SI (reg:SI VAX_SP_REGNUM)
-					(match_operand:SI 2 "immediate_operand" "i")))]
+					(match_operand:SI 2 "immediate_operand" "i")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
 {
   operands[1] = GEN_INT ((INTVAL (operands[1]) - 4) / 4);
@@ -1358,7 +1454,8 @@
 	(call (match_operand:QI 1 "memory_operand" "m")
 	      (match_operand:SI 2 "const_int_operand" "n")))
    (set (reg:SI VAX_SP_REGNUM) (plus:SI (reg:SI VAX_SP_REGNUM)
-					(match_operand:SI 3 "immediate_operand" "i")))]
+					(match_operand:SI 3 "immediate_operand" "i")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "*
 {
@@ -1380,7 +1477,8 @@
 
 (define_insn "*call"
    [(call (match_operand:QI 0 "memory_operand" "m")
-	  (match_operand:SI 1 "const_int_operand" ""))]
+	  (match_operand:SI 1 "const_int_operand" ""))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "calls $0,%0")
 
@@ -1400,7 +1498,8 @@
 (define_insn "*call_value"
   [(set (match_operand 0 "" "")
 	(call (match_operand:QI 1 "memory_operand" "m")
-	      (match_operand:SI 2 "const_int_operand" "")))]
+	      (match_operand:SI 2 "const_int_operand" "")))
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "calls $0,%1")
 
@@ -1543,31 +1642,35 @@
 		 (label_ref:SI (match_operand 2 "" ""))))]
   ""
   "casel %0,$0,%1")
-
+
 (define_insn "pushextsym"
   [(set (match_operand:SI 0 "push_operand" "=g")
-	(match_operand:SI 1 "external_symbolic_operand" "i"))]
+	(match_operand:SI 1 "external_symbolic_operand" "i"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "pushab %a1")
 
 (define_insn "movextsym"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SI 1 "external_symbolic_operand" "i"))]
+	(match_operand:SI 1 "external_symbolic_operand" "i"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "movab %a1,%0")
 
 (define_insn "pushlclsym"
   [(set (match_operand:SI 0 "push_operand" "=g")
-	(match_operand:SI 1 "local_symbolic_operand" "i"))]
+	(match_operand:SI 1 "local_symbolic_operand" "i"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "pushab %a1")
 
 (define_insn "movlclsym"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SI 1 "local_symbolic_operand" "i"))]
+	(match_operand:SI 1 "local_symbolic_operand" "i"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "movab %a1,%0")
-
+
 ;;- load or push effective address
 ;; These come after the move and add/sub patterns
 ;; because we don't want pushl $1 turned into pushad 1.
@@ -1578,28 +1681,32 @@
 
 (define_insn "pushaddr<mode>"
   [(set (match_operand:SI 0 "push_operand" "=g")
-	(match_operand:VAXintQHSD 1 "address_operand" "p"))]
+	(match_operand:VAXintQHSD 1 "address_operand" "p"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "pusha<VAXintQHSD:isfx> %a1")
 
 (define_insn "movaddr<mode>"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:VAXintQHSD 1 "address_operand" "p"))]
+	(match_operand:VAXintQHSD 1 "address_operand" "p"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "mova<VAXintQHSD:isfx> %a1,%0")
 
 (define_insn "pushaddr<mode>"
   [(set (match_operand:SI 0 "push_operand" "=g")
-	(match_operand:VAXfp 1 "address_operand" "p"))]
+	(match_operand:VAXfp 1 "address_operand" "p"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "pusha<VAXfp:fsfx> %a1")
 
 (define_insn "movaddr<mode>"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:VAXfp 1 "address_operand" "p"))]
+	(match_operand:VAXfp 1 "address_operand" "p"))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "mova<VAXfp:fsfx> %a1,%0")
-
+
 ;; These used to be peepholes, but it is more straightforward to do them
 ;; as single insns.  However, we must force the output to be a register
 ;; if it is not an offsettable address so that we know that we can assign
@@ -1617,7 +1724,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
 	(and:SI (ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 			     (match_operand:QI 2 "const_int_operand" "n"))
-		(match_operand:SI 3 "const_int_operand" "n")))]
+		(match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   "(INTVAL (operands[3]) & ~((1 << (32 - INTVAL (operands[2]))) - 1)) == 0"
   "*
 {
@@ -1639,7 +1747,8 @@
   [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
 	(and:SI (ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
 			   (match_operand:QI 2 "const_int_operand" "n"))
-		(match_operand:SI 3 "const_int_operand" "n")))]
+		(match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CCNZV CC_REGNUM))]
   ""
   "*
 {
@@ -1650,7 +1759,8 @@
 
 ;; Instruction sequence to sync the VAX instruction stream.
 (define_insn "sync_istream"
-  [(unspec_volatile [(const_int 0)] VUNSPEC_SYNC_ISTREAM)]
+  [(unspec_volatile [(const_int 0)] VUNSPEC_SYNC_ISTREAM)
+   (clobber (reg:CC CC_REGNUM))]
   ""
   "movpsl -(%|sp)\;pushal 1(%|pc)\;rei")
 
