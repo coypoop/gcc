@@ -1108,33 +1108,6 @@ vax_builtin_setjmp_frame_value (void)
   return hard_frame_pointer_rtx;
 }
 
-/* Select the CC mode to be used for the side effect compare with
-   zero, given the compare operation code in op and the compare
-   operands in x in and y.  */
-/* XXX all cases?
- * XXX completely made up! */
-machine_mode
-vax_select_cc_mode (enum rtx_code op ATTRIBUTE_UNUSED, rtx x ATTRIBUTE_UNUSED, rtx y ATTRIBUTE_UNUSED)
-{
-	return CCmode;
-	/* XXX todo
-  switch (GET_CODE (x))
-    {
-    case NEG:
-    case AND:
-    case IOR:
-    case XOR:
-    case NOT:
-    case CTZ:
-    case MEM:
-    case REG:
-      return CCmode;
-    default:
-      return CCNZVmode;
-    }
-    */
-}
-
 /* Output integer move instructions.  */
 
 const char *

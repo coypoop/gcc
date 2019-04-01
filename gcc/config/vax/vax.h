@@ -468,11 +468,6 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 
 #define BRANCH_COST(speed_p, predictable_p) 0
 
-/* Give a comparison code (EQ, NE etc) and the first operand of a COMPARE,
-   return the mode to be used for the comparison.  */
-
-#define SELECT_CC_MODE(OP,X,Y) vax_select_cc_mode (OP, X, Y)
-
 #define OUTPUT_JUMP(NORMAL, FLOAT, NO_OV)	\
   { if (cc_status.flags & CC_NO_OVERFLOW)	\
       return NO_OV;				\

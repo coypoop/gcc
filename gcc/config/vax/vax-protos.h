@@ -28,7 +28,6 @@ extern bool adjacent_operands_p (rtx, rtx, machine_mode);
 extern const char *rev_cond_name (rtx);
 extern void print_operand_address (FILE *, rtx);
 extern void print_operand (FILE *, rtx, int);
-extern machine_mode vax_select_cc_mode (enum rtx_code, rtx, rtx);
 extern void vax_expand_addsub_di_operands (rtx *, enum rtx_code);
 extern bool vax_decomposed_dimode_operand_p (rtx, rtx);
 extern const char * vax_output_int_move (rtx, rtx *, machine_mode);
