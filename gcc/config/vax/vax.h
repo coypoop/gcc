@@ -113,7 +113,7 @@ along with GCC; see the file COPYING3.  If not see
 /* The table of an ADDR_DIFF_VEC must be contiguous with the case
    opcode, it is part of the case instruction.  */
 #define ADDR_VEC_ALIGN(ADDR_VEC) 0
-
+
 /* Standard register usage.  */
 
 /* Number of actual hardware registers.
@@ -163,7 +163,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Register in which address to store a structure value
    is passed to a function.  */
 #define VAX_STRUCT_VALUE_REGNUM 1
-
+
 /* Define the classes of registers for register constraints in the
    machine description.  Also define ranges of constants.
 
@@ -219,7 +219,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define INDEX_REG_CLASS ALL_REGS
 #define BASE_REG_CLASS ALL_REGS
 
-
+
 /* Stack layout; function entry, exit and calling.  */
 
 /* Define this if pushing a word on the stack
@@ -276,7 +276,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    On the VAX, no registers are used in this way.  */
 
 #define FUNCTION_ARG_REGNO_P(N) ((void) (N), 0)
-
+
 /* Define a data type for recording info about an argument list
    during the scan of that argument list.  This data type should
    hold all necessary information about the function itself
@@ -354,7 +354,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    on the target machine when generating position independent code.  */
 
 #define LEGITIMATE_PIC_OPERAND_P(X) legitimate_pic_operand_p (X)
-
+
 /* Addressing modes, and classification of registers for them.  */
 
 #define HAVE_POST_INCREMENT 1
@@ -374,7 +374,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
   ((regno) < FIRST_PSEUDO_REGISTER || reg_renumber[regno] >= 0)
 #define REGNO_OK_FOR_BASE_P(regno)	\
   ((regno) < FIRST_PSEUDO_REGISTER || reg_renumber[regno] >= 0)
-
+
 /* Maximum number of registers that can appear in a valid memory address.  */
 
 #define MAX_REGS_PER_ADDRESS 2
@@ -415,7 +415,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define REG_OK_FOR_BASE_P(X) REGNO_OK_FOR_BASE_P (REGNO (X))
 
 #endif
-
+
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE HImode
@@ -467,13 +467,13 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    used to replace branches can be expensive.  */
 
 #define BRANCH_COST(speed_p, predictable_p) 0
-
+
 #define OUTPUT_JUMP(NORMAL, FLOAT, NO_OV)	\
   { if (cc_status.flags & CC_NO_OVERFLOW)	\
       return NO_OV;				\
     return NORMAL;				\
   }
-
+
 /* Control the assembler format that we output.  */
 
 /* A C string constant describing how to begin a comment in the target

@@ -339,7 +339,7 @@
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "")
 	(fix:VAXint (match_operand:VAXfp 1 "general_operand")))]
   "")
-
+
 ;;- All kinds of add instructions.
 
 (define_insn "add<mode>3"
@@ -408,7 +408,7 @@
 		 (match_operand:DI 2 "general_operand" "Fsro,Fs")))]
   "!TARGET_QMATH"
   "* return vax_output_int_add (insn, operands, DImode);")
-
+
 ;;- All kinds of subtract instructions.
 
 (define_insn "sub<mode>3"
@@ -450,7 +450,7 @@
 		  (match_operand:DI 2 "general_operand" "Fsor,Fs")))]
   "!TARGET_QMATH"
   "* return vax_output_int_subtract (insn, operands, DImode);")
-
+
 ;;- Multiply instructions.
 
 (define_insn "mul<mode>3"
@@ -542,7 +542,7 @@
 ;		(match_operand:SI 2 "general_operand" "g")))]
 ;  ""
 ;  "ediv %2,%1,%0,%3")
-
+
 ;; Bit-and on the VAX is done with a clear-bits insn.
 (define_expand "and<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "")
@@ -590,7 +590,7 @@
    bic<VAXint:isfx>2 %<VAXint:iprefx>2,%0
    bic<VAXint:isfx>3 %<VAXint:iprefx>2,%1,%0")
 
-
+
 ;;- Bit set instructions.
 
 (define_insn "ior<mode>3"
@@ -615,7 +615,7 @@
    xor<VAXint:isfx>2 %1,%0
    xor<VAXint:isfx>3 %2,%1,%0")
 
-
+
 (define_insn "neg<mode>2"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
 	(neg:VAXfp (match_operand:VAXfp 1 "general_operand" "gF")))]
@@ -634,7 +634,7 @@
   ""
   "mcom<VAXint:isfx> %1,%0")
 
-
+
 ;; Arithmetic right shift on the VAX works by negating the shift count,
 ;; then emitting a right shift with the shift count negated.  This means
 ;; that all actual shift counts in the RTL will be positive.  This
@@ -781,7 +781,7 @@
 ;		 (match_operand:SI 3 "general_operand" "g")))]
 ;  ""
 ;  "index %1,$0x80000000,$0x7fffffff,%3,%2,%0")
-
+
 ;; Special cases of bit-field insns which we should
 ;; recognize in preference to the general case.
 ;; These handle aligned 8-bit and 16-bit fields,
@@ -877,7 +877,7 @@
     return \"cvtbl %1,%0\";
   return \"cvtwl %1,%0\";
 }")
-
+
 ;; Register-only SImode cases of bit-field insns.
 
 (define_insn ""
@@ -1089,7 +1089,7 @@
 	(match_operand:SI 3 "general_operand" "nrmT"))]
   ""
   "insv %3,%2,%1,%0")
-
+
 ;; Unconditional jump
 (define_insn "jump"
   [(set (pc)
@@ -1143,7 +1143,7 @@
 		      (label_ref (match_operand 1 "" ""))))]
   ""
   "j%C0 %l1") ; %C0 negates condition
-
+
 ;; Recognize jbs, jlbs, jbc and jlbc instructions.  Note that the operand
 ;; of jlbs and jlbc insns are SImode in the hardware.  However, if it is
 ;; memory, we use QImode in the insn.  So we can't use those instructions
@@ -1204,7 +1204,7 @@
   "@
    jlbc %0,%l2
    jbc %1,%0,%l2")
-
+
 ;; Subtract-and-jump and Add-and-jump insns.
 ;; These are not used when output is for the Unix assembler
 ;; because it does not know how to modify them to reach far.
@@ -1544,7 +1544,7 @@
 		 (label_ref:SI (match_operand 2 "" ""))))]
   ""
   "casel %0,$0,%1")
-
+
 (define_insn "pushextsym"
   [(set (match_operand:SI 0 "push_operand" "=g")
 	(match_operand:SI 1 "external_symbolic_operand" "i"))]
@@ -1568,7 +1568,7 @@
 	(match_operand:SI 1 "local_symbolic_operand" "i"))]
   ""
   "movab %a1,%0")
-
+
 ;;- load or push effective address
 ;; These come after the move and add/sub patterns
 ;; because we don't want pushl $1 turned into pushad 1.
@@ -1600,7 +1600,7 @@
 	(match_operand:VAXfp 1 "address_operand" "p"))]
   ""
   "mova<VAXfp:fsfx> %a1,%0")
-
+
 ;; These used to be peepholes, but it is more straightforward to do them
 ;; as single insns.  However, we must force the output to be a register
 ;; if it is not an offsettable address so that we know that we can assign
