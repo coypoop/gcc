@@ -172,7 +172,7 @@ extern const struct real_format pdp11_d_format;
 #define FIXED_REGISTERS  \
 {0, 0, 0, 0, 0, 0, 1, 1, \
  0, 0, 0, 0, 0, 0, 1, 1, \
- 1 }
+ 1, 1, 1 }
 
 
 
