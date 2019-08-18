@@ -1721,7 +1721,7 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 }
 
 const char *
-vax_output_movmemsi (rtx insn, rtx *operands)
+vax_output_movmemsi (rtx_insn *insn, rtx *operands)
 {
   HOST_WIDE_INT n = INTVAL (operands[2]);
   HOST_WIDE_INT off;

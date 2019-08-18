@@ -34,7 +34,7 @@ extern bool vax_decomposed_dimode_operand_p (rtx, rtx);
 extern const char * vax_output_int_move (rtx, rtx *, machine_mode);
 extern const char * vax_output_int_add (rtx_insn *, rtx *, machine_mode);
 extern const char * vax_output_int_subtract (rtx_insn *, rtx *, machine_mode);
-extern const char * vax_output_movmemsi (rtx, rtx *);
+extern const char * vax_output_movmemsi (rtx_insn *, rtx *);
 #endif /* RTX_CODE */
 
 #ifdef REAL_VALUE_TYPE
