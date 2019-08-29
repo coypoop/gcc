@@ -1,2 +1,31 @@
 - vax_int_move in vax.c should be put into vax.md instead.
 - change optimize_size to optimize_function_for_size_p(cfun)
+
+
+- ICE repro:
+
+#!/bin/sh
+
+cat << EOF > oacc.i
+int a, b;
+int e() {
+  short *c = 0;
+  char d = c[a + 1];
+  b = d;
+  a += 2;
+}
+EOF
+vax--netbsdelf-gcc -O2 -c oacc.i
+
+
+NetBSD works around it with a local diff to reload(!)
+https://github.com/NetBSD/src/commit/e437e96750193b86d0464965661f616e011056fa
+
+Crash at:
+emit-rtl.c:2310 gcc_assert (memory_address_addr_space_p (mode, addr, as));
+
+This is likely from vax_legitimate_address_p not handling all possible scenarios.
+
+Possibly problematic indexing modes:
+   c:	b0 40 9f 02 	movw *0x2[r0],r1
+   c:	98 40 a0 02 	cvtbl 0x2(r0)[r0],15 <e+0x15>
