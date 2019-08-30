@@ -58,6 +58,22 @@
 ;; Some output patterns want integer immediates with a prefix...
 (define_mode_attr  iprefx [(QI "B") (HI "H") (SI "N")])
 
+;; Types of instructions (for scheduling purposes).
+
+(define_attr "type" "load,store,bit1,mult,macc,div,fpu,single,other"
+  (const_string "other"))
+
+
+(define_insn_reservation "vax_other" 1
+			 (eq_attr "type" "other")
+			 "nothing")
+(define_insn_reservation "vax_mult" 2
+			 (eq_attr "type" "mult")
+			 "nothing")
+(define_insn_reservation "vax_memory" 2
+			 (eq_attr "type" "load")
+			 "nothing")
+
 ;;
 (include "constraints.md")
 (include "predicates.md")
