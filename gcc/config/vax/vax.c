@@ -1703,6 +1703,8 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
   return gen_rtx_MEM (mode, tmp);
 }
 
+/* For small moves (<=48 bytes), expand to the proper series of
+   mov[qlwb] instructions. */
 const char *
 vax_output_movmemsi (rtx_insn *insn, rtx *operands)
 {
@@ -1780,6 +1782,8 @@ legitimate_constant_address_p (rtx x)
    return true;
 }
 
+/* When generating PIC code, return false (disallow) an operand to
+   be global symbol + offset */
 bool
 legitimate_pic_operand_p (rtx x)
 {
@@ -2332,6 +2336,7 @@ vax_starting_frame_offset (void)
   return TARGET_ELF ? -4 : 0;
 }
 
+/* return true if the DImode can be decomposed */
 bool
 vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
 {
