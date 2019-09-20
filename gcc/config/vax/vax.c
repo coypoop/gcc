@@ -2171,7 +2171,7 @@ adjacent_operands_p (rtx lo, rtx hi, machine_mode mode)
   if (REG_P (lo))
     return mode == SImode && REGNO (lo) + 1 == REGNO (hi);
   if (CONST_INT_P (lo))
-    return INTVAL (hi) == 0 && 0 <= INTVAL (lo) && INTVAL (lo) < 64;
+    return INTVAL (hi) == 0 && INTVAL (lo) >= 0 && INTVAL (lo) < 64;
   if (CONST_INT_P (lo))
     return mode != SImode;
 
