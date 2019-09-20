@@ -172,8 +172,8 @@ vax_expand_prologue (void)
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (df_regs_ever_live_p (regno) && !call_used_regs[regno])
       {
-        mask |= 1 << regno;
-        offset += 4;
+	mask |= 1 << regno;
+	offset += 4;
       }
 
   insn = emit_insn (gen_procedure_entry_mask (GEN_INT (mask)));
@@ -197,7 +197,7 @@ vax_expand_prologue (void)
      The rest of the prologue will adjust the SP for the local frame.  */
 
   add_reg_note (insn, REG_CFA_DEF_CFA,
-                plus_constant (Pmode, frame_pointer_rtx, offset));
+		plus_constant (Pmode, frame_pointer_rtx, offset));
   insn = emit_insn (gen_blockage ());
   RTX_FRAME_RELATED_P (insn) = 1;
 
@@ -371,7 +371,6 @@ print_operand_address (FILE * file, rtx addr)
 	}
       else
 	{
-	   debug_rtx (orig);
 	   gcc_unreachable ();
 	}
 
@@ -416,7 +415,6 @@ print_operand_address (FILE * file, rtx addr)
 	    }
 	  else
 	    {
-	      debug_rtx (orig);
 	      gcc_unreachable ();
 	    }
 
@@ -450,13 +448,11 @@ print_operand_address (FILE * file, rtx addr)
 	    }
 	  else
 	    {
-	      debug_rtx (orig);
 	      gcc_unreachable ();
 	    }
 	}
       else
 	{
-	  debug_rtx (orig);
 	  gcc_unreachable ();
 	}
 
@@ -471,7 +467,6 @@ print_operand_address (FILE * file, rtx addr)
 	    {
 	      if (ireg)
 		{
-		  debug_rtx (orig);
 		  gcc_unreachable ();
 		}
 	      ireg = reg1;
@@ -486,7 +481,6 @@ print_operand_address (FILE * file, rtx addr)
 	    {
 	      if (breg && ireg)
 		{
-		  debug_rtx (orig);
 		  output_operand_lossage ("symbol used with both base and indexed registers");
 		}
 
@@ -495,7 +489,6 @@ print_operand_address (FILE * file, rtx addr)
 		  && GET_CODE (XEXP (XEXP (offset, 0), 0)) == SYMBOL_REF
 		  && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (offset, 0), 0)))
 		{
-		  debug_rtx (orig);
 		  output_operand_lossage ("symbol with offset used in PIC mode");
 		}
 #endif
@@ -521,7 +514,6 @@ print_operand_address (FILE * file, rtx addr)
 	    ireg = XEXP (ireg, 0);
 	  if (! REG_P (ireg))
 	    {
-	      debug_rtx (orig);
 	      output_operand_lossage ("non-register index expression");
 	    }
 	  fprintf (file, "[%s]", reg_names[REGNO (ireg)]);
@@ -586,14 +578,12 @@ print_operand (FILE *file, rtx x, int code)
     }
   else if (GET_CODE (x) == SUBREG)
     {
-      debug_rtx (x);
       output_operand_lossage ("SUBREG operand");
     }
   else
     {
       if (flag_pic > 1 && symbolic_operand (x, SImode))
 	{
-	  debug_rtx (x);
 	  output_operand_lossage ("symbol used as immediate operand");
 	}
       putc ('$', file);
@@ -1399,9 +1389,6 @@ vax_output_int_add (rtx_insn *insn, rtx *operands, machine_mode mode)
 	int carry = 1;
 	bool sub;
 
-	if (TARGET_QMATH && 0)
-	  debug_rtx (insn);
-
 	split_quadword_operands (insn, PLUS, operands, low, 3);
 
 	if (TARGET_QMATH)
@@ -1550,7 +1537,7 @@ vax_output_int_add (rtx_insn *insn, rtx *operands, machine_mode mode)
       if (flag_pic
 	  && (symbolic_operand (operands[1], SImode)
 	      || symbolic_operand (operands[1], SImode)))
-	debug_rtx (insn);
+	gcc_unreachable();
 
       return "addl3 %1,%2,%0";
 
@@ -1607,9 +1594,6 @@ vax_output_int_subtract (rtx_insn *insn, rtx *operands, machine_mode mode)
 	rtx low[3];
 	const char *pattern;
 	int carry = 1;
-
-	if (TARGET_QMATH && 0)
-	  debug_rtx (insn);
 
 	split_quadword_operands (insn, MINUS, operands, low, 3);
 
@@ -1688,8 +1672,8 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 	b = XEXP (b, 0);
       if (CONST_INT_P (b))
 	{
-          off += INTVAL (b);
-          base = a;
+	  off += INTVAL (b);
+	  base = a;
 	}
       else if (REG_P (a) && GET_CODE (b) == SYMBOL_REF)
 	{
@@ -1701,13 +1685,12 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 	}
       else if (REG_P (a) && GET_CODE (b) == PLUS)
 	{
-          off += INTVAL (XEXP (b, 1));
+	  off += INTVAL (XEXP (b, 1));
 	  base = gen_rtx_PLUS (Pmode, a, plus_constant(Pmode, XEXP (b, 0), off));
 	  off = 0;
 	}
       else
-        {
-	  debug_rtx(base);
+	{
 	  gcc_unreachable ();
 	}
     }

@@ -814,7 +814,7 @@
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
    && (REG_P (operands[0])
        || (MEM_P (operands[0])
-          && ! mode_dependent_address_p (XEXP (operands[0], 0),
+	  && ! mode_dependent_address_p (XEXP (operands[0], 0),
 				       MEM_ADDR_SPACE (operands[0]))))"
   "*
 {
@@ -844,7 +844,7 @@
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
    && (REG_P (operands[1])
        || (MEM_P (operands[1])
-          && ! mode_dependent_address_p (XEXP (operands[1], 0),
+	  && ! mode_dependent_address_p (XEXP (operands[1], 0),
 				      MEM_ADDR_SPACE (operands[1]))))"
   "*
 {
@@ -873,7 +873,7 @@
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
    && (REG_P (operands[1])
        || (MEM_P (operands[1])
-          && ! mode_dependent_address_p (XEXP (operands[1], 0),
+	  && ! mode_dependent_address_p (XEXP (operands[1], 0),
 				      MEM_ADDR_SPACE (operands[1]))))"
   "*
 {
@@ -1116,26 +1116,26 @@
 
 (define_expand "cbranch<mode>4"
   [(set (cc0)
-        (compare (match_operand:VAXint 1 "nonimmediate_operand" "")
-                 (match_operand:VAXint 2 "general_operand" "")))
+	(compare (match_operand:VAXint 1 "nonimmediate_operand" "")
+		 (match_operand:VAXint 2 "general_operand" "")))
    (set (pc)
-        (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
-                                                               (const_int 0)])
-              (label_ref (match_operand 3 "" ""))
-              (pc)))]
+	(if_then_else
+	      (match_operator 0 "ordered_comparison_operator" [(cc0)
+							       (const_int 0)])
+	      (label_ref (match_operand 3 "" ""))
+	      (pc)))]
  "")
 
 (define_expand "cbranch<mode>4"
   [(set (cc0)
-        (compare (match_operand:VAXfp 1 "general_operand" "")
-                 (match_operand:VAXfp 2 "general_operand" "")))
+	(compare (match_operand:VAXfp 1 "general_operand" "")
+		 (match_operand:VAXfp 2 "general_operand" "")))
    (set (pc)
-        (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
-                                                               (const_int 0)])
-              (label_ref (match_operand 3 "" ""))
-              (pc)))]
+	(if_then_else
+	      (match_operator 0 "ordered_comparison_operator" [(cc0)
+							       (const_int 0)])
+	      (label_ref (match_operand 3 "" ""))
+	      (pc)))]
  "")
 
 (define_insn "*branch"
@@ -1700,22 +1700,22 @@
 
 (define_peephole2
   [(set (match_operand:SI 0 "push_operand" "")
-        (const_int 0))
+	(const_int 0))
    (set (match_dup 0)
-        (match_operand:SI 1 "const_int_operand" ""))]
+	(match_operand:SI 1 "const_int_operand" ""))]
   "INTVAL (operands[1]) >= 0"
   [(set (match_dup 0)
-        (match_dup 1))]
+	(match_dup 1))]
   "operands[0] = gen_rtx_MEM (DImode, XEXP (operands[0], 0));")
 
 (define_peephole2
   [(set (match_operand:SI 0 "push_operand" "")
-        (match_operand:SI 1 "general_operand" ""))
+	(match_operand:SI 1 "general_operand" ""))
    (set (match_dup 0)
-        (match_operand:SI 2 "general_operand" ""))]
+	(match_operand:SI 2 "general_operand" ""))]
   "vax_decomposed_dimode_operand_p (operands[2], operands[1])"
   [(set (match_dup 0)
-        (match_dup 2))]
+	(match_dup 2))]
   "{
     operands[0] = gen_rtx_MEM (DImode, XEXP (operands[0], 0));
     operands[2] = REG_P (operands[2])
@@ -1727,13 +1727,13 @@
 ; precedes a jump which relies on the CC flags being set correctly.
 (define_peephole2
   [(set (match_operand:SI 0 "nonimmediate_operand" "")
-        (match_operand:SI 1 "general_operand" ""))
+	(match_operand:SI 1 "general_operand" ""))
    (set (match_operand:SI 2 "nonimmediate_operand" "")
-        (match_operand:SI 3 "general_operand" ""))]
+	(match_operand:SI 3 "general_operand" ""))]
   "0 && vax_decomposed_dimode_operand_p (operands[1], operands[3])
    && vax_decomposed_dimode_operand_p (operands[0], operands[2])"
   [(set (match_dup 0)
-        (match_dup 1))]
+	(match_dup 1))]
   "{
     operands[0] = REG_P (operands[0])
       ? gen_rtx_REG (DImode, REGNO (operands[0]))
