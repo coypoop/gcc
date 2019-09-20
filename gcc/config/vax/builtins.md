@@ -38,7 +38,7 @@
 {
   rtx label = gen_label_rtx ();
   emit_insn (gen_ctzsi2 (operands[0], operands[1]));
-  emit_jump_insn (gen_condjump (gen_rtx_NE(VOIDmode, cc0_rtx, const0_rtx), label));
+  emit_jump_insn (gen_condjump (gen_rtx_NE (VOIDmode, cc0_rtx, const0_rtx), label));
   emit_move_insn (operands[0], constm1_rtx);
   emit_label (label);
   emit_insn (gen_addsi3 (operands[0], operands[0], const1_rtx));

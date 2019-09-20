@@ -1706,7 +1706,7 @@
   "INTVAL (operands[1]) >= 0"
   [(set (match_dup 0)
         (match_dup 1))]
-  "operands[0] = gen_rtx_MEM(DImode, XEXP (operands[0], 0));")
+  "operands[0] = gen_rtx_MEM (DImode, XEXP (operands[0], 0));")
 
 (define_peephole2
   [(set (match_operand:SI 0 "push_operand" "")
@@ -1717,10 +1717,10 @@
   [(set (match_dup 0)
         (match_dup 2))]
   "{
-    operands[0] = gen_rtx_MEM(DImode, XEXP (operands[0], 0));
+    operands[0] = gen_rtx_MEM (DImode, XEXP (operands[0], 0));
     operands[2] = REG_P (operands[2])
-      ? gen_rtx_REG(DImode, REGNO (operands[2]))
-      : gen_rtx_MEM(DImode, XEXP (operands[2], 0));
+      ? gen_rtx_REG (DImode, REGNO (operands[2]))
+      : gen_rtx_MEM (DImode, XEXP (operands[2], 0));
 }")
 
 ; Leave this commented out until we can determine whether the second move
@@ -1736,9 +1736,9 @@
         (match_dup 1))]
   "{
     operands[0] = REG_P (operands[0])
-      ? gen_rtx_REG(DImode, REGNO (operands[0]))
-      : gen_rtx_MEM(DImode, XEXP (operands[0], 0));
+      ? gen_rtx_REG (DImode, REGNO (operands[0]))
+      : gen_rtx_MEM (DImode, XEXP (operands[0], 0));
     operands[1] = REG_P (operands[1])
-      ? gen_rtx_REG(DImode, REGNO (operands[1]))
-      : gen_rtx_MEM(DImode, XEXP (operands[1], 0));
+      ? gen_rtx_REG (DImode, REGNO (operands[1]))
+      : gen_rtx_MEM (DImode, XEXP (operands[1], 0));
 }")
