@@ -40,8 +40,9 @@
   "
 {
   rtx label = gen_label_rtx ();
+  rtx cc_reg = gen_rtx_REG (CCmode, CC_REGNUM);
   emit_insn (gen_count_zero (operands[0], operands[1]));
-  emit_jump_insn (gen_condjump (gen_rtx_NE (VOIDmode, cc0_rtx, const0_rtx), label));
+  emit_jump_insn (gen_condjump (gen_rtx_NE (VOIDmode, cc_reg, const0_rtx), label));
   emit_move_insn (operands[0], constm1_rtx);
   emit_label (label);
   emit_insn (gen_addsi3 (operands[0], operands[0], const1_rtx));
@@ -51,8 +52,6 @@
 (define_insn "ctzsi2"
   [ (set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
          (ctz:SI (match_operand:SI 1 "general_operand" "nrQT")))
-    (set (cc0)
-	 (compare (match_dup 0) (const_int 0)))
    ]
   ""
   "ffs $0,$32,%1,%0\;tstl %0")
@@ -60,9 +59,6 @@
 (define_insn "count_zero"
   [ (set (match_operand:SI 0 "nonimmediate_operand" "")
          (ctz:SI (match_operand:SI 1 "general_operand" "")))
-    (set (cc0)
-	 (compare (match_dup 0)
-		  (const_int 33)))
   ]
   ""
   "ffs $0,$32,%1,%0")

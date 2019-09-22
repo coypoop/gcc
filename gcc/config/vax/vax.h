@@ -121,12 +121,12 @@ along with GCC; see the file COPYING3.  If not see
    from 0 to just below FIRST_PSEUDO_REGISTER.
    All registers that the compiler knows about must be given numbers,
    even those that are not normally considered general registers.  */
-#define FIRST_PSEUDO_REGISTER 16
+#define FIRST_PSEUDO_REGISTER 17
 
 /* 1 for registers that have pervasive standard uses
    and are not available for the register allocator.
    On the VAX, these are the AP, FP, SP and PC.  */
-#define FIXED_REGISTERS {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}
+#define FIXED_REGISTERS {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1}
 
 /* 1 for registers not available across function calls.
    These must include the FIXED_REGISTERS and also any
@@ -134,7 +134,7 @@ along with GCC; see the file COPYING3.  If not see
    The latter must include the registers where values are returned
    and the register where structure-value addresses are passed.
    Aside from that, you can include as many other registers as you like.  */
-#define CALL_USED_REGISTERS {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}
+#define CALL_USED_REGISTERS {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1}
 
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
@@ -469,18 +469,6 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 
 #define BRANCH_COST(speed_p, predictable_p) 0
 
-/* Tell final.c how to eliminate redundant test instructions.  */
-
-/* Here we define machine-dependent flags and fields in cc_status
-   (see `conditions.h').  No extra ones are needed for the VAX.  */
-
-/* Store in cc_status the expressions
-   that the condition codes will describe
-   after execution of an instruction whose pattern is EXP.
-   Do not alter them if the instruction would not alter the cc's.  */
-
-#define NOTICE_UPDATE_CC(EXP, INSN)	\
-  vax_notice_update_cc ((EXP), (INSN))
 
 #define OUTPUT_JUMP(NORMAL, FLOAT, NO_OV)	\
   { if (cc_status.flags & CC_NO_OVERFLOW)	\
@@ -521,7 +509,9 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define REGISTER_PREFIX ""
 #define REGISTER_NAMES					\
   { "r0", "r1",  "r2",  "r3", "r4", "r5", "r6", "r7",	\
-    "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc", }
+    "r8", "r9", "r10", "r11", "ap", "fp", "sp", "pc",	\
+    "cc"						\
+  }
 
 /* This is BSD, so it wants DBX format.  */
 

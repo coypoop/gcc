@@ -23,8 +23,6 @@
 ;;-
 ;;- See file "rtl.def" for documentation on define_insn, match_*, et al.
 ;;-
-;;- cpp macro #define NOTICE_UPDATE_CC in file tm.h handles condition code
-;;- updates for most instructions.
 
 ;; UNSPEC_VOLATILE usage:
 
@@ -42,7 +40,8 @@
    (VAX_FP_REGNUM 13)	    ; Register 13 contains the frame pointer
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer
    (VAX_PC_REGNUM 15)	    ; Register 15 contains the program counter
-   (VAX_PSW_REGNUM 16)	    ; Program Status Word
+   (CC_REGNUM 16)           ; Condition code register
+   (VAX_PSW_REGNUM 17)	    ; Program Status Word
   ]
 )
 
@@ -81,28 +80,28 @@
 (include "predicates.md")
 
 (define_insn "*cmp<mode>"
-  [(set (cc0)
-	(compare (match_operand:VAXint 0 "nonimmediate_operand" "nrmT,nrmT")
-		 (match_operand:VAXint 1 "general_operand" "I,nrmT")))]
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_operand:VAXint 0 "nonimmediate_operand" "nrmT,nrmT")
+		    (match_operand:VAXint 1 "general_operand" "I,nrmT")))]
   ""
   "@
    tst<VAXint:isfx> %0
    cmp<VAXint:isfx> %0,%1")
 
 (define_insn "*cmp<mode>"
-  [(set (cc0)
-	(compare (match_operand:VAXfp 0 "general_operand" "gF,gF")
-		 (match_operand:VAXfp 1 "general_operand" "G,gF")))]
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_operand:VAXfp 0 "general_operand" "gF,gF")
+		    (match_operand:VAXfp 1 "general_operand" "G,gF")))]
   ""
   "@
    tst<VAXfp:fsfx> %0
    cmp<VAXfp:fsfx> %0,%1")
 
 (define_insn "*bit<mode>"
-  [(set (cc0)
-	(compare (and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
-			     (match_operand:VAXint 1 "general_operand" "nrmT"))
-		 (const_int 0)))]
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
+			        (match_operand:VAXint 1 "general_operand" "nrmT"))
+		    (const_int 0)))]
   ""
   "bit<VAXint:isfx> %0,%1")
 
@@ -898,8 +897,8 @@
 ;; Register-only SImode cases of bit-field insns.
 
 (define_insn ""
-  [(set (cc0)
-	(compare
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC
 	 (sign_extract:SI (match_operand:SI 0 "register_operand" "r")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
@@ -908,8 +907,8 @@
   "cmpv %2,%1,%0,%3")
 
 (define_insn ""
-  [(set (cc0)
-	(compare
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC
 	 (zero_extract:SI (match_operand:SI 0 "register_operand" "r")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
@@ -973,8 +972,8 @@
 ;; don't match these (and therefore match the cases above instead).
 
 (define_insn ""
-  [(set (cc0)
-	(compare
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC
 	 (sign_extract:SI (match_operand:QI 0 "memory_operand" "m")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
@@ -983,8 +982,8 @@
   "cmpv %2,%1,%0,%3")
 
 (define_insn ""
-  [(set (cc0)
-	(compare
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC
 	 (zero_extract:SI (match_operand:QI 0 "nonimmediate_operand" "rm")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
@@ -1124,24 +1123,24 @@
 ;; Conditional jumps
 
 (define_expand "cbranch<mode>4"
-  [(set (cc0)
-	(compare (match_operand:VAXint 1 "nonimmediate_operand" "")
-		 (match_operand:VAXint 2 "general_operand" "")))
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_operand:VAXint 1 "nonimmediate_operand" "")
+		    (match_operand:VAXint 2 "general_operand" "")))
    (set (pc)
 	(if_then_else
-	      (match_operator 0 "ordered_comparison_operator" [(cc0)
+	      (match_operator 0 "ordered_comparison_operator" [(reg:CC CC_REGNUM)
 							       (const_int 0)])
 	      (label_ref (match_operand 3 "" ""))
 	      (pc)))]
  "")
 
 (define_expand "cbranch<mode>4"
-  [(set (cc0)
-	(compare (match_operand:VAXfp 1 "general_operand" "")
-		 (match_operand:VAXfp 2 "general_operand" "")))
+  [(set (reg:CC CC_REGNUM)
+	(compare:CC (match_operand:VAXfp 1 "general_operand" "")
+		    (match_operand:VAXfp 2 "general_operand" "")))
    (set (pc)
 	(if_then_else
-	      (match_operator 0 "ordered_comparison_operator" [(cc0)
+	      (match_operator 0 "ordered_comparison_operator" [(reg:CC CC_REGNUM)
 							       (const_int 0)])
 	      (label_ref (match_operand 3 "" ""))
 	      (pc)))]
@@ -1150,7 +1149,7 @@
 (define_insn "*branch"
   [(set (pc)
 	(if_then_else (match_operator 0 "ordered_comparison_operator"
-				      [(cc0)
+				      [(reg:CC CC_REGNUM)
 				       (const_int 0)])
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
@@ -1161,7 +1160,7 @@
 (define_insn "*branch_reversed"
   [(set (pc)
 	(if_then_else (match_operator 0 "ordered_comparison_operator"
-				      [(cc0)
+				      [(reg:CC CC_REGNUM)
 				       (const_int 0)])
 		      (pc)
 		      (label_ref (match_operand 1 "" ""))))]
