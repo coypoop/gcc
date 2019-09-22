@@ -52,6 +52,7 @@
 (define_insn "ctzsi2"
   [ (set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
          (ctz:SI (match_operand:SI 1 "general_operand" "nrQT")))
+    (clobber (reg:CC CC_REGNUM))
    ]
   ""
   "ffs $0,$32,%1,%0\;tstl %0")
@@ -59,6 +60,7 @@
 (define_insn "count_zero"
   [ (set (match_operand:SI 0 "nonimmediate_operand" "")
          (ctz:SI (match_operand:SI 1 "general_operand" "")))
+    (clobber (reg:CC CC_REGNUM))
   ]
   ""
   "ffs $0,$32,%1,%0")
