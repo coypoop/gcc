@@ -65,7 +65,6 @@ along with GCC; see the file COPYING3.  If not see
 			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
 			      16))
 
-
 /* The VAX wants no space between the case instruction and the jump table.  */
 #undef  ASM_OUTPUT_BEFORE_CASE_LABEL
 #define ASM_OUTPUT_BEFORE_CASE_LABEL(FILE, PREFIX, NUM, TABLE)
@@ -104,5 +103,5 @@ along with GCC; see the file COPYING3.  If not see
     fputs (integer_asm_op (SIZE, FALSE), FILE);		\
     fprintf (FILE, "%%pcrel%d(", SIZE * 8);		\
     assemble_name (FILE, LABEL);			\
-    fputc (')', FILE);					\
+    fprintf (FILE, "%+d)", SIZE);			\
   } while (0)

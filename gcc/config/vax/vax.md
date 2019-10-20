@@ -40,6 +40,7 @@
    (VAX_FP_REGNUM 13)	    ; Register 13 contains the frame pointer
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer
    (VAX_PC_REGNUM 15)	    ; Register 15 contains the program counter
+   (VAX_PSW_REGNUM 16)	    ; Program Status Word
   ]
 )
 
@@ -56,6 +57,22 @@
 
 ;; Some output patterns want integer immediates with a prefix...
 (define_mode_attr  iprefx [(QI "B") (HI "H") (SI "N")])
+
+;; Types of instructions (for scheduling purposes).
+
+(define_attr "type" "load,store,bit1,mult,macc,div,fpu,single,other"
+  (const_string "other"))
+
+
+(define_insn_reservation "vax_other" 1
+			 (eq_attr "type" "other")
+			 "nothing")
+(define_insn_reservation "vax_mult" 2
+			 (eq_attr "type" "mult")
+			 "nothing")
+(define_insn_reservation "vax_memory" 2
+			 (eq_attr "type" "load")
+			 "nothing")
 
 ;;
 (include "constraints.md")
@@ -215,6 +232,11 @@
   ""
   "
 {
+  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) <= 48)
+    {
+      emit_insn (gen_movmemsi1_2 (operands[0], operands[1], operands[2]));
+      DONE;
+    }
   emit_insn (gen_cpymemhi1 (operands[0], operands[1], operands[2]));
   DONE;
 }")
@@ -223,6 +245,13 @@
 ;; but it should suffice
 ;; that anything generated as this insn will be recognized as one
 ;; and that it won't successfully combine with anything.
+
+(define_insn "movmemsi1_2"
+  [(set (match_operand:BLK 0 "memory_operand" "=B")
+	(match_operand:BLK 1 "memory_operand" "B"))
+   (use (match_operand:SI 2 "const_int_operand" "g"))]
+  "INTVAL (operands[2]) <= 48"
+  "* return vax_output_movmemsi (insn, operands);")
 
 (define_insn "cpymemhi1"
   [(set (match_operand:BLK 0 "memory_operand" "=o")
@@ -773,6 +802,9 @@
 ;; These handle aligned 8-bit and 16-bit fields,
 ;; which can usually be done with move instructions.
 
+;; netbsd changed this to REG_P (operands[0]) || (MEM_P (operands[0]) && ...
+;; but gcc made it just !MEM_P (operands[0]) || ...
+
 (define_insn ""
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+ro")
 			 (match_operand:QI 1 "const_int_operand" "n")
@@ -780,9 +812,10 @@
 	(match_operand:SI 3 "general_operand" "g"))]
    "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
-   && (!MEM_P (operands[0])
-       || ! mode_dependent_address_p (XEXP (operands[0], 0),
-				       MEM_ADDR_SPACE (operands[0])))"
+   && (REG_P (operands[0])
+       || (MEM_P (operands[0])
+	  && ! mode_dependent_address_p (XEXP (operands[0], 0),
+				       MEM_ADDR_SPACE (operands[0]))))"
   "*
 {
   if (REG_P (operands[0]))
@@ -809,9 +842,10 @@
 			 (match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && (!MEM_P (operands[1])
-       || ! mode_dependent_address_p (XEXP (operands[1], 0),
-				      MEM_ADDR_SPACE (operands[1])))"
+   && (REG_P (operands[1])
+       || (MEM_P (operands[1])
+	  && ! mode_dependent_address_p (XEXP (operands[1], 0),
+				      MEM_ADDR_SPACE (operands[1]))))"
   "*
 {
   if (REG_P (operands[1]))
@@ -837,9 +871,10 @@
 			 (match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && (!MEM_P (operands[1])
-       || ! mode_dependent_address_p (XEXP (operands[1], 0),
-				      MEM_ADDR_SPACE (operands[1])))"
+   && (REG_P (operands[1])
+       || (MEM_P (operands[1])
+	  && ! mode_dependent_address_p (XEXP (operands[1], 0),
+				      MEM_ADDR_SPACE (operands[1]))))"
   "*
 {
   if (REG_P (operands[1]))
@@ -1081,26 +1116,26 @@
 
 (define_expand "cbranch<mode>4"
   [(set (cc0)
-        (compare (match_operand:VAXint 1 "nonimmediate_operand" "")
-                 (match_operand:VAXint 2 "general_operand" "")))
+	(compare (match_operand:VAXint 1 "nonimmediate_operand" "")
+		 (match_operand:VAXint 2 "general_operand" "")))
    (set (pc)
-        (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
-                                                               (const_int 0)])
-              (label_ref (match_operand 3 "" ""))
-              (pc)))]
+	(if_then_else
+	      (match_operator 0 "ordered_comparison_operator" [(cc0)
+							       (const_int 0)])
+	      (label_ref (match_operand 3 "" ""))
+	      (pc)))]
  "")
 
 (define_expand "cbranch<mode>4"
   [(set (cc0)
-        (compare (match_operand:VAXfp 1 "general_operand" "")
-                 (match_operand:VAXfp 2 "general_operand" "")))
+	(compare (match_operand:VAXfp 1 "general_operand" "")
+		 (match_operand:VAXfp 2 "general_operand" "")))
    (set (pc)
-        (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
-                                                               (const_int 0)])
-              (label_ref (match_operand 3 "" ""))
-              (pc)))]
+	(if_then_else
+	      (match_operator 0 "ordered_comparison_operator" [(cc0)
+							       (const_int 0)])
+	      (label_ref (match_operand 3 "" ""))
+	      (pc)))]
  "")
 
 (define_insn "*branch"
@@ -1660,3 +1695,30 @@
   emit_barrier ();
   DONE;
 })
+
+(include "builtins.md")
+
+(define_peephole2
+  [(set (match_operand:SI 0 "push_operand" "")
+	(const_int 0))
+   (set (match_dup 0)
+	(match_operand:SI 1 "const_int_operand" ""))]
+  "INTVAL (operands[1]) >= 0"
+  [(set (match_dup 0)
+	(match_dup 1))]
+  "operands[0] = gen_rtx_MEM (DImode, XEXP (operands[0], 0));")
+
+(define_peephole2
+  [(set (match_operand:SI 0 "push_operand" "")
+	(match_operand:SI 1 "general_operand" ""))
+   (set (match_dup 0)
+	(match_operand:SI 2 "general_operand" ""))]
+  "vax_decomposed_dimode_operand_p (operands[2], operands[1])"
+  [(set (match_dup 0)
+	(match_dup 2))]
+  "{
+    operands[0] = gen_rtx_MEM (DImode, XEXP (operands[0], 0));
+    operands[2] = REG_P (operands[2])
+      ? gen_rtx_REG (DImode, REGNO (operands[2]))
+      : gen_rtx_MEM (DImode, XEXP (operands[2], 0));
+}")

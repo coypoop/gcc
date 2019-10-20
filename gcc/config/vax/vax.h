@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#include "vax-protos.h"
 
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS()		\
@@ -137,6 +138,9 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
+
+/* VAX PSW for DWARF-2 */
+#define PSW_REGNUM VAX_PSW_REGNUM
 
 /* VAX pc is overloaded on a register.  */
 #define PC_REGNUM VAX_PC_REGNUM
@@ -346,6 +350,10 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 					RETURN_ADDRESS_OFFSET))		\
    : (rtx) 0)
 
+/* A C expression that is nonzero if X is a legitimate immediate operand
+   on the target machine when generating position independent code.  */
+
+#define LEGITIMATE_PIC_OPERAND_P(X) legitimate_pic_operand_p (X)
 
 /* Addressing modes, and classification of registers for them.  */
 
