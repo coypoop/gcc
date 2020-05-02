@@ -25,6 +25,7 @@
 #include <sys/bsd_types.h>
 #include <sys/ttold.h>
 #endif
+#include <net/bpf.h>
 #include <netinet/tcp.h>
 #if defined(HAVE_NETINET_IN_SYSTM_H)
 #include <netinet/in_systm.h>
@@ -281,6 +282,25 @@ enum {
 #endif
 };
 
+enum {
+  BIOCSETIF_val = BIOCSETIF,
+  BIOCGRTIMEOUT_val = BIOCGRTIMEOUT,
+  BIOCSRTIMEOUT_val = BIOCSRTIMEOUT,
+  BIOCGSTATS_val = BIOCGSTATS,
+  BIOCIMMEDIATE_val = BIOCIMMEDIATE,
+  BIOCSETF_val = BIOCSETF,
+  BIOCVERSION_val = BIOCVERSION,
+  BIOCGHDRCMPLT_val = BIOCGHDRCMPLT,
+  BIOCSHDRCMPLT_val = BIOCSHDRCMPLT,
+  BIOCGBLEN_val = BIOCGBLEN,
+  BIOCSBLEN_val = BIOCSBLEN,
+  BIOCGDLT_val = BIOCGDLT,
+  BIOCSDLT_val = BIOCSDLT,
+  BIOCPROMISC_val = BIOCPROMISC,
+  BIOCFLUSH_val = BIOCFLUSH,
+  BIOCGETIF_val = BIOCGETIF,
+};
+
 #if defined(HAVE_SYS_EPOLL_H)
 enum {
   epoll_data_offset = offsetof(struct epoll_event, data)
@@ -415,6 +435,9 @@ SREF(epoll_event);
 EREF(EPOLLIN);
 EREF(epoll_data_offset);
 #endif
+
+// XXX conditionals for bpf
+SREF(bpf_insn);
 
 #if defined(HAVE_SYS_MOUNT_H)
 // From sys/mount.h

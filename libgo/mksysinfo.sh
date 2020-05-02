@@ -639,6 +639,23 @@ grep '^const _SCM_' gen-sysinfo.go | \
 # The ucred struct.
 upcase_fields "_ucred" "Ucred" >> ${OUT} || true
 
+upcase_fields "_bpf_insn" "BpfInsn" >> ${OUT} || true
+
+# The bpf_program struct.
+grep '^type _bpf_program ' gen-sysinfo.go | \
+    sed -e 's/_bpf_program/BpfProgram/' \
+      -e 's/bf_len/Len/' \
+      -e 's/bf_insns/Insns/' \
+    >> ${OUT}
+
+# The bpf_version struct.
+grep '^type _bpf_version ' gen-sysinfo.go | \
+    sed -e 's/_bpf_version/BpfVersion/' \
+      -e 's/bv_major/Major/' \
+      -e 's/bv_minor/Minor/' \
+    >> ${OUT}
+
+
 # The ip_mreq struct.
 grep '^type _ip_mreq ' gen-sysinfo.go | \
     sed -e 's/_ip_mreq/IPMreq/' \
@@ -923,6 +940,102 @@ fi
 if ! grep '^const TUNGETFILTER' ${OUT} >/dev/null 2>&1; then
   if grep '^const _TUNGETFILTER_val' ${OUT} >/dev/null 2>&1; then
     echo 'const TUNGETFILTER = _TUNGETFILTER_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCSETIF' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCSETIF_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCSETIF = _BIOCSETIF_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCGRTIMEOUT' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCGRTIMEOUT_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCGRTIMEOUT = _BIOCGRTIMEOUT_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCSRTIMEOUT' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCSRTIMEOUT_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCSRTIMEOUT = _BIOCSRTIMEOUT_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCGSTATS' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCGSTATS_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCGSTATS = _BIOCGSTATS_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCIMMEDIATE' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCIMMEDIATE_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCIMMEDIATE = _BIOCIMMEDIATE_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCSETF' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCSETF_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCSETF = _BIOCSETF_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCVERSION' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCVERSION_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCVERSION = _BIOCVERSION_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCGHDRCMPLT' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCGHDRCMPLT_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCGHDRCMPLT = _BIOCGHDRCMPLT_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCSHDRCMPLT' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCSHDRCMPLT_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCSHDRCMPLT = _BIOCSHDRCMPLT_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCGBLEN' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCGBLEN_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCGBLEN = _BIOCGBLEN_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCSBLEN' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCSBLEN_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCSBLEN = _BIOCSBLEN_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCGDLT' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCGDLT_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCGDLT = _BIOCGDLT_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCSDLT' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCSDLT_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCSDLT = _BIOCSDLT_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCPROMISC' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCPROMISC_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCPROMISC = _BIOCPROMISC_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCFLUSH' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCFLUSH_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCFLUSH = _BIOCFLUSH_val' >> ${OUT}
+  fi
+fi
+
+if ! grep '^const BIOCGETIF' ${OUT} >/dev/null 2>&1; then
+  if grep '^const _BIOCGETIF_val' ${OUT} >/dev/null 2>&1; then
+    echo 'const BIOCGETIF = _BIOCGETIF_val' >> ${OUT}
   fi
 fi
 
