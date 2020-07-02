@@ -992,8 +992,8 @@ general_operand (rtx op, machine_mode mode)
 	 ??? This is a kludge.  */
       if (!reload_completed
           && MEM_P (sub)
-          && (SUBREG_BYTE (op) > GET_MODE_SIZE (GET_MODE (sub))
-              || SUBREG_BYTE (op) % GET_MODE_SIZE (mode) != 0
+          && (maybe_gt(SUBREG_BYTE (op), GET_MODE_SIZE (GET_MODE (sub)))
+              || !multiple_p(SUBREG_BYTE (op), GET_MODE_SIZE (mode))
               )
           )
 	return 0;
