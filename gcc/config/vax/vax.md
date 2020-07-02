@@ -33,6 +33,8 @@
 			    ; insn in the code.
   VUNSPEC_SYNC_ISTREAM      ; sequence of insns to sync the I-stream
   VUNSPEC_PEM		    ; 'procedure_entry_mask' insn.
+
+  VUNSPEC_EH_RETURN
 ])
 
 (define_constants
@@ -955,7 +957,14 @@
   if (INTVAL (operands[3]) & 31)
     return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
   if (rtx_equal_p (operands[0], operands[1]))
+    {
+      if (INTVAL (operands[2]) == 32)
+        return \"\";  /* no-op */
+      else
     return \"bicl2 %M2,%0\";
+    }
+  if (INTVAL (operands[2]) == 32)
+    return \"movl %1,%0\";
   return \"bicl3 %M2,%1,%0\";
 }")
 
@@ -1483,6 +1492,38 @@
   emit_jump_insn (gen_return ());
   DONE;
 }")
+
+;; Exception handling
+;; This is used when compiling the stack unwinding routines.
+(define_expand "eh_return"
+  [(use (match_operand 0 "general_operand"))]
+  ""
+{
+  if (GET_MODE (operands[0]) != word_mode)
+    operands[0] = convert_to_mode (word_mode, operands[0], 0);
+  emit_insn (gen_eh_set_retaddr (operands[0]));
+  DONE;
+})
+
+(define_insn_and_split "eh_set_retaddr"
+  [(unspec [(match_operand:SI 0 "general_operand")] VUNSPEC_EH_RETURN)
+   (clobber (match_scratch:SI 1 "=&r"))
+   ]
+  ""
+  "#"
+  "reload_completed"
+  [(const_int 0)]
+{
+  /* the return address for the current frame is always at 0x10(%fp) */
+  rtx tmp = plus_constant(Pmode, frame_pointer_rtx, 4 * UNITS_PER_WORD);
+  tmp = gen_rtx_MEM (word_mode, tmp);
+  MEM_VOLATILE_P(tmp) = 1;
+  tmp = gen_rtx_SET(tmp, operands[0]);
+  emit_insn(tmp);
+  DONE;
+})
+
+
 
 (define_insn "nop"
   [(const_int 0)]

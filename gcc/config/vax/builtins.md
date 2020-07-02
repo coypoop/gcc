@@ -32,12 +32,15 @@
 
 (define_expand "ffssi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "")
-	(ffs:SI (match_operand:SI 1 "general_operand" "")))]
+	(ffs:SI (match_operand:SI 1 "general_operand" "")))
+   (set (cc0)
+	 (compare (match_dup 0) (const_int 0)))
+	 ]
   ""
   "
 {
   rtx label = gen_label_rtx ();
-  emit_insn (gen_ctzsi2 (operands[0], operands[1]));
+  emit_insn (gen_count_zero (operands[0], operands[1]));
   emit_jump_insn (gen_condjump (gen_rtx_NE (VOIDmode, cc0_rtx, const0_rtx), label));
   emit_move_insn (operands[0], constm1_rtx);
   emit_label (label);
@@ -46,11 +49,24 @@
 }")
 
 (define_insn "ctzsi2"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
-	(ctz:SI (match_operand:SI 1 "general_operand" "nrQT")))
-   (set (cc0) (match_dup 0))]
+  [ (set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
+         (ctz:SI (match_operand:SI 1 "general_operand" "nrQT")))
+    (set (cc0)
+	 (compare (match_dup 0) (const_int 0)))
+   ]
+  ""
+  "ffs $0,$32,%1,%0\;tstl %0")
+
+(define_insn "count_zero"
+  [ (set (match_operand:SI 0 "nonimmediate_operand" "")
+         (ctz:SI (match_operand:SI 1 "general_operand" "")))
+    (set (cc0)
+	 (compare (match_dup 0)
+		  (const_int 33)))
+  ]
   ""
   "ffs $0,$32,%1,%0")
+
 
 (define_expand "sync_lock_test_and_set<mode>"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=&g")
@@ -67,7 +83,7 @@
 
   label = gen_label_rtx ();
   emit_move_insn (operands[0], const1_rtx);
-  emit_jump_insn (gen_jbbssi<mode> (operands[1], const0_rtx, label, operands[1]));
+  emit_jump_insn (gen_jbbssi<mode> (operands[1], const0_rtx, label));
   emit_move_insn (operands[0], const0_rtx);
   emit_label (label);
   DONE;
@@ -77,13 +93,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "g")
+	    (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "+g")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:QI 3 "memory_operand" "+0")
+     (set (zero_extract:SI (match_dup 0)
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
@@ -94,13 +110,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:HI 0 "memory_operand" "Q")
+	    (ne (zero_extract:SI (match_operand:HI 0 "memory_operand" "+Q")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:HI 3 "memory_operand" "+0")
+     (set (zero_extract:SI (match_dup 0)
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
@@ -111,13 +127,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:SI 0 "memory_operand" "Q")
+	    (ne (zero_extract:SI (match_operand:SI 0 "memory_operand" "+Q")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:SI 3 "memory_operand" "+0")
+     (set (zero_extract:SI (match_dup 0)
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]

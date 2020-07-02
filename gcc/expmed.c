@@ -42,6 +42,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "explow.h"
 #include "expr.h"
 #include "langhooks.h"
+#include "recog.h"
 #include "tree-vector-builder.h"
 
 struct target_expmed default_target_expmed;
@@ -5618,7 +5619,10 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
   scalar_int_mode int_mode;
   if (is_int_mode (mode, &int_mode)
       && GET_MODE_BITSIZE (int_mode) == BITS_PER_WORD * 2
-      && (!MEM_P (op0) || ! MEM_VOLATILE_P (op0)))
+      && (!MEM_P (op0) || ! MEM_VOLATILE_P (op0))
+      && ( ! (MEM_P (op0) &&
+              mode_dependent_address_p (XEXP (op0, 0), MEM_ADDR_SPACE (op0))) )
+      )
     {
       rtx tem;
       if ((code == EQ || code == NE)

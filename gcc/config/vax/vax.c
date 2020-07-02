@@ -178,6 +178,17 @@ vax_expand_prologue (void)
 	offset += 4;
       }
 
+  if (crtl->calls_eh_return)
+    {
+      mask |= 0
+        | ( 1 << EH_RETURN_DATA_REGNO(0) )
+        | ( 1 << EH_RETURN_DATA_REGNO(1) )
+        | ( 1 << EH_RETURN_DATA_REGNO(2) )
+        | ( 1 << EH_RETURN_DATA_REGNO(3) )
+        ;
+      offset += 4 * 4;
+    }
+
   insn = emit_insn (gen_procedure_entry_mask (GEN_INT (mask)));
   RTX_FRAME_RELATED_P (insn) = 1;
 
@@ -557,7 +568,7 @@ print_operand (FILE *file, rtx x, int code)
   else if (code == 'b' && CONST_INT_P (x))
     fprintf (file, "$%d", (int) (0xff & - INTVAL (x)));
   else if (code == 'M' && CONST_INT_P (x))
-    fprintf (file, "$%d", ~((1 << INTVAL (x)) - 1));
+    fprintf (file, "$%d", ((~0) << (INTVAL (x))));
   else if (code == 'x' && CONST_INT_P (x))
     fprintf (file, HOST_WIDE_INT_PRINT_HEX, INTVAL (x));
   else if (REG_P (x))
@@ -2015,6 +2026,50 @@ vax_mode_dependent_address_p (const_rtx x, addr_space_t as ATTRIBUTE_UNUSED)
 }
 
 static rtx
+decompose_address_operand(rtx addr)
+{
+  enum rtx_code code = GET_CODE (addr);
+
+  switch (code)
+    {
+    case CONST:
+      return decompose_address_operand (XEXP (addr, 0));
+    case PLUS:
+    case MULT:
+      {
+        rtx op0, op1;
+        rtx temp;
+        /*
+         * Generate a temporary register, assign the result of
+         * decomposing op0 to it, then generate an op code opping (PLUS
+         * or MULT) the result of decomposing op1 to it.
+         * Return the temporary register.
+         */
+        temp = gen_reg_rtx (Pmode);
+        op0 = decompose_address_operand (XEXP (addr, 0));
+        op1 = decompose_address_operand (XEXP (addr, 1));
+
+        emit_move_insn (temp, op0);
+
+        if (code == PLUS)
+          {
+            temp = gen_rtx_PLUS (Pmode, temp, op1);
+          }
+        else if (code == MULT)
+          {
+            temp = gen_rtx_MULT (Pmode, temp, op1);
+          }
+
+        return temp;
+      }
+      break;
+    default:
+      break;
+    }
+  return addr;
+}
+
+static rtx
 fixup_mathdi_operand (rtx x, machine_mode mode)
 {
   if (illegal_addsub_di_memory_operand (x, mode))
@@ -2029,7 +2084,7 @@ fixup_mathdi_operand (rtx x, machine_mode mode)
 	  addr = XEXP (XEXP (addr, 0), 0);
 	}
 #endif
-      emit_move_insn (temp, addr);
+      emit_move_insn (temp, decompose_address_operand (addr));
       if (offset)
 	temp = gen_rtx_PLUS (Pmode, temp, offset);
       x = gen_rtx_MEM (DImode, temp);

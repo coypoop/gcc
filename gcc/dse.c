@@ -2116,6 +2116,7 @@ static void
 check_mem_read_rtx (rtx *loc, bb_info_t bb_info)
 {
   rtx mem = *loc, mem_addr;
+  machine_mode mem_mode;
   insn_info_t insn_info;
   poly_int64 offset = 0;
   poly_int64 width = 0;
@@ -2169,10 +2170,8 @@ check_mem_read_rtx (rtx *loc, bb_info_t bb_info)
       return;
     }
 
-  if (GET_MODE (mem) == BLKmode)
-    width = -1;
-  else
-    width = GET_MODE_SIZE (GET_MODE (mem));
+  mem_mode = GET_MODE (mem);
+  width = (mem_mode == BLKmode) ? -1 : GET_MODE_SIZE (mem_mode);
 
   if (!endpoint_representable_p (offset, known_eq (width, -1) ? 1 : width))
     {
@@ -2258,7 +2257,7 @@ check_mem_read_rtx (rtx *loc, bb_info_t bb_info)
 					   store_info->width)
 		      && all_positions_needed_p (store_info,
 						 offset - store_info->offset,
-						 width)
+						 GET_MODE_SIZE (mem_mode))
 		      && replace_read (store_info, i_ptr, read_info,
 				       insn_info, loc, bb_info->regs_live))
 		    return;
@@ -2325,7 +2324,8 @@ check_mem_read_rtx (rtx *loc, bb_info_t bb_info)
 	      && known_subrange_p (offset, width, store_info->offset,
 				   store_info->width)
 	      && all_positions_needed_p (store_info,
-					 offset - store_info->offset, width)
+					 offset - store_info->offset,
+					 GET_MODE_SIZE (mem_mode))
 	      && replace_read (store_info, i_ptr,  read_info, insn_info, loc,
 			       bb_info->regs_live))
 	    return;
